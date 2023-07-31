@@ -1,34 +1,34 @@
 import pandas as pd
 import numpy as np
 
+def clean_phone_number(x):
+	x = pd.Series(str(x).strip()).replace('\D', '', regex=True).values[0]
+
+	if len(x) != 10:
+		return np.nan
+	else:
+		return x[0:3] + '-' + x[3:6] + '-' + x[6:10]
+
 df = pd.read_excel("/Users/lucas/Downloads/CustomerCallList.xlsx")
 
 df = df.drop_duplicates()
 df = df.drop(columns="Not_Useful_Column")
-
 df["Last_Name"] = df["Last_Name"].str.strip("123._/")
 
-df["Phone_Number"] = df["Phone_Number"].apply(lambda x: str(x).strip())
-df["Phone_Number"] = df["Phone_Number"].str.replace('\D', '', regex=True)
-df["Phone_Number"] = df["Phone_Number"].apply(lambda x: x if len(x) == 10 else "")
-df["Phone_Number"] = df["Phone_Number"].apply(lambda x: x if x == "" else x[0:3] + '-' + x[3:6] + '-' + x[6:10])
+df["Phone_Number"] = df["Phone_Number"].apply(clean_phone_number)
 
-df["Address"] = df["Address"].replace("N/a", "")
-
-df["Paying Customer"] = df["Paying Customer"].replace("N/a", "")
-df["Paying Customer"] = df["Paying Customer"].replace("N", "No")
-df["Paying Customer"] = df["Paying Customer"].replace("Y", "Yes")
+replacements = {"N/a": "", "N": "No", "Y": "Yes"}
+df["Address"] = df["Address"].replace(replacements)
+df["Paying Customer"] = df["Paying Customer"].replace(replacements)
+df["Do_Not_Contact"] = df["Do_Not_Contact"].replace(replacements)
 
 df["Do_Not_Contact"] = df["Do_Not_Contact"].fillna("?")
-df["Do_Not_Contact"] = df["Do_Not_Contact"].replace("N", "No")
-df["Do_Not_Contact"] = df["Do_Not_Contact"].replace("Y", "Yes")
 
-df["Phone_Number"].replace("", np.nan, inplace=True)
 df = df.dropna(subset=["Phone_Number"])
 
 df = df.rename(columns={"First_Name": "First name",
-                        "Last_Name": "Last name",
-                        "Phone_Number": "Phone Number",
-                        "Do_Not_Contact": "Do not contact"})
+						"Last_Name": "Last name",
+						"Phone_Number": "Phone Number",
+						"Do_Not_Contact": "Do not contact"})
 
 print(df)
